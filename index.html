@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MineWatch – Report Illegal Mining</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--ink:#1d2a1f;--mut:#667366;--acc:#1f7a4d;--acc2:#c8641b;--line:#d9d4c7;--warn:#b3261e;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121a14;--card:#1b261d;--ink:#e8efe6;--mut:#9bad9c;--acc:#4cc58a;--acc2:#f0924a;--line:#2c3b2e;--warn:#ff8a80}}
+:root[data-theme="dark"]{--bg:#121a14;--card:#1b261d;--ink:#e8efe6;--mut:#9bad9c;--acc:#4cc58a;--acc2:#f0924a;--line:#2c3b2e;--warn:#ff8a80}
+html{scroll-behavior:smooth;scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;line-height:1.55}
+header.hero{padding:56px 20px 48px;text-align:center;background:linear-gradient(135deg,#1f7a4d,#0f3d2a 60%,#6b3a12);color:#fff;position:relative;overflow:hidden}
+header.hero::after{content:"";position:absolute;width:420px;height:420px;border-radius:50%;background:radial-gradient(#ffffff22,transparent 70%);top:-160px;right:-120px;animation:float 8s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(40px)}}
+.hero h1{margin:0 0 8px;font-size:clamp(2rem,6vw,3.2rem)}
+.hero p{max-width:560px;margin:0 auto 22px;opacity:.92}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:12px 20px;font-size:1rem;font-weight:600;cursor:pointer;background:var(--acc);color:#fff;text-decoration:none;transition:transform .15s,box-shadow .15s}
+.btn:hover{transform:translateY(-2px);box-shadow:0 6px 16px #0003}
+.btn.alt{background:var(--acc2)}.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.hero .btn{background:#fff;color:#0f3d2a}
+main{max-width:760px;margin:0 auto;padding:24px 16px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px;margin-bottom:22px;animation:rise .5s both}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+h2{margin:0 0 4px;font-size:1.3rem}.sub{color:var(--mut);margin:0 0 16px;font-size:.95rem}
+.steps{display:flex;gap:6px;margin-bottom:18px}
+.steps span{flex:1;height:6px;border-radius:3px;background:var(--line);transition:background .3s}
+.steps span.on{background:var(--acc)}
+label{display:block;font-weight:600;margin:14px 0 6px}
+input,select,textarea{width:100%;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:110px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:8px 14px;border-radius:99px;border:1px solid var(--line);cursor:pointer;user-select:none;transition:.15s;font-size:.93rem}
+.chip.sel{background:var(--acc);color:#fff;border-color:var(--acc);transform:scale(1.05)}
+.cam{position:relative;background:#000;border-radius:14px;overflow:hidden;margin-top:10px;display:none}
+.cam video,.cam canvas,.cam img{width:100%;display:block;max-height:420px;object-fit:contain}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.stamp{margin-top:12px;padding:12px;border-radius:12px;background:var(--bg);border:1px dashed var(--acc);font-family:ui-monospace,Menlo,monospace;font-size:.88rem;display:none}
+.stamp.ok{display:block;animation:rise .4s both}
+.pulse{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--acc);margin-right:6px;animation:pl 1.2s infinite}
+@keyframes pl{50%{opacity:.25;transform:scale(1.6)}}
+.err{color:var(--warn);font-size:.9rem;margin-top:8px}
+.rep{border-top:1px solid var(--line);padding:12px 0;display:flex;gap:12px}
+.rep img{width:64px;height:64px;object-fit:cover;border-radius:10px;background:var(--line)}
+.rep small{color:var(--mut)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translate(-50%,120px);background:var(--ink);color:var(--bg);padding:12px 20px;border-radius:12px;transition:transform .35s;z-index:20;max-width:90%}
+.toast.show{transform:translate(-50%,0)}
+footer{text-align:center;color:var(--mut);font-size:.85rem;padding:0 16px 30px}
+.btn,.chip{position:relative;overflow:hidden}
+.rip{position:absolute;border-radius:50%;background:#fff6;transform:scale(0);animation:rp .6s linear;pointer-events:none;width:40px;height:40px;margin:-20px 0 0 -20px}
+@keyframes rp{to{transform:scale(6);opacity:0}}
+#fx{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero>*:not(canvas){position:relative;z-index:1}
+.live{display:inline-flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:22px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem}
+.live span{background:#ffffff1f;backdrop-filter:blur(6px);padding:6px 12px;border-radius:99px;border:1px solid #ffffff33}
+.hero h1{background:linear-gradient(90deg,#fff,#ffd9a8,#fff);background-size:200%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 4s linear infinite}
+@keyframes shine{to{background-position:200% 0}}
+.card{transition:transform .25s,box-shadow .25s}
+.card:hover{transform:translateY(-3px);box-shadow:0 10px 28px #0002}
+.rv{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}
+.rv.in{opacity:1;transform:none}
+.flash{animation:fl .8s}
+@keyframes fl{0%{filter:brightness(4);transform:scale(.96)}100%{filter:none;transform:none}}
+.chip:hover{border-color:var(--acc);transform:translateY(-2px)}
+.steps span.on{box-shadow:0 0 10px var(--acc)}
+#cf{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:30}
+.hm{border:1px solid var(--line);border-radius:14px;cursor:crosshair;max-width:100%}
+.tog{display:inline-block;padding:8px 14px;border-radius:99px;border:1px solid var(--line);cursor:pointer;user-select:none;font-size:.93rem;transition:.15s}
+.tog.sel{background:var(--acc2);color:#fff;border-color:var(--acc2)}
+.legend{height:10px;border-radius:5px;margin:12px auto 4px;max-width:420px;background:linear-gradient(90deg,#2c7bb6,#00cc88,#ffff00,#ff8c00,#d7191c)}
+.lgl{display:flex;justify-content:space-between;max-width:420px;margin:0 auto;font-size:.8rem;color:var(--mut)}
+:root{--bg:#fbf5e1;--card:#fffdf6;--ink:#1a1a1a;--mut:#6a6350;--acc:#006B3F;--acc2:#CE1126;--line:#e4dab8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101510;--card:#1a211a;--ink:#f3efe0;--mut:#b2ad94;--acc:#2fb26f;--acc2:#ff4d5e;--line:#33392e}}
+:root[data-theme="dark"]{--bg:#101510;--card:#1a211a;--ink:#f3efe0;--mut:#b2ad94;--acc:#2fb26f;--acc2:#ff4d5e;--line:#33392e}
+header.hero{background:linear-gradient(90deg,#CE1126 33.3%,#FCD116 33.3% 66.6%,#006B3F 66.6%) 0 100%/100% 10px no-repeat,linear-gradient(160deg,#0c0c0c,#1d261d 55%,#00502f);padding-bottom:58px}
+.hero h1{background-image:linear-gradient(90deg,#fff,#FCD116,#fff);background-size:200%}
+.hero .btn{background:#FCD116;color:#111}
+.star{display:inline-block;font-size:56px;line-height:1;color:#FCD116;filter:drop-shadow(0 0 14px #FCD11699);animation:spin 9s linear infinite}
+@keyframes spin{to{transform:rotateY(360deg)}}
+.akw{font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:#FCD116;margin-bottom:14px}
+.card{overflow:hidden;padding-top:28px;position:relative}
+.card::before{content:"";position:absolute;left:0;right:0;top:0;height:6px;background:repeating-linear-gradient(90deg,#CE1126 0 22px,#FCD116 22px 44px,#006B3F 44px 66px,#111 66px 74px)}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="star">★</div>
+  <h1>MineWatch Ghana</h1>
+  <div class="akw">Akwaaba · Stop galamsey</div>
+  <p>See illegal mining near you? Capture a geotagged, timestamped photo, describe what you saw, and send it to us. Together we can protect the Pra, Ankobra and Offin rivers, our forests and our farmland. Ghana is ours to protect.</p>
+  <a class="btn" href="#report">Report now</a>
+  <div class="live"><span id="clk">🕒 --:--:--</span><span id="gps">📍 Locating…</span><span id="cntr">📄 0 reports sent</span></div>
+</header>
+<main>
+<section class="card" id="report">
+  <h2>Report galamsey</h2>
+  <p class="sub">Stay safe – never confront miners. Report from a distance.</p>
+  <div class="steps"><span id="s1" class="on"></span><span id="s2"></span><span id="s3"></span></div>
+
+  <label>1. What did you see?</label>
+  <div class="chips" id="types">
+    <div class="chip">Pit / excavation</div><div class="chip">River dredging</div><div class="chip">Polluted water</div>
+    <div class="chip">Heavy machinery</div><div class="chip">Forest cleared</div><div class="chip">Other</div>
+  </div>
+
+  <label>2. Take a photo (location &amp; time are stamped automatically)</label>
+  <div class="row">
+    <button class="btn" id="openCam" type="button">📷 Open camera</button>
+    <button class="btn ghost" id="pick" type="button">🖼️ Use phone camera / file</button>
+  </div>
+  <input type="file" id="file" accept="image/*" capture="environment" hidden>
+  <div class="cam" id="camBox"><video id="vid" playsinline muted></video></div>
+  <div class="row" id="snapRow" style="display:none"><button class="btn alt" id="snap" type="button">● Capture</button><button class="btn ghost" id="stop" type="button">Cancel</button></div>
+  <div class="cam" id="outBox"><canvas id="cv"></canvas></div>
+  <div class="stamp" id="stamp"></div>
+  <div class="err" id="gerr"></div>
+
+  <label for="desc">3. Describe it</label>
+  <textarea id="desc" maxlength="800" placeholder="How many people? Any machines? Since when? Is water muddy?"></textarea>
+  <div class="sub" style="margin:4px 0 0"><span id="cnt">0</span>/800</div>
+
+  <label for="sev">Urgency</label>
+  <select id="sev"><option>Low – old/abandoned site</option><option selected>Medium – active site</option><option>High – ongoing damage / water source affected</option></select>
+
+  <div class="row"><button class="btn" id="submit" type="button">🚨 Send report</button></div>
+</section>
+
+<section class="card" id="contact">
+  <h2>Contact us</h2>
+  <p class="sub">Questions or a tip you’d rather explain in your own words? Message us by email.</p>
+  <label for="cn">Your name</label><input id="cn" placeholder="Ama Mensah">
+  <label for="cm">Message</label><textarea id="cm" placeholder="Write your message…"></textarea>
+  <div class="row"><button class="btn" id="gmail" type="button">✉️ Open in Gmail</button><button class="btn ghost" id="mailto" type="button">Use default mail app</button></div>
+</section>
+
+<section class="card" id="heat">
+  <h2>🔥 Galamsey hotspot map: all reports</h2>
+  <p class="sub">Every report ever made on this site glows on the map – brighter and redder means more or more urgent activity. Tap the map to inspect a spot.</p>
+  <div class="row" style="margin:0 0 12px"><span class="tog sel" id="smp">Loading…</span></div>
+  <div style="text-align:center"><canvas id="hm" class="hm"></canvas></div>
+  <div class="legend"></div><div class="lgl"><span>Low</span><span>Medium</span><span>High</span></div>
+  <p class="sub" id="mapinfo" style="text-align:center;margin-top:10px"></p>
+</section>
+
+<section class="card">
+  <h2>Reports on this device</h2>
+  <p class="sub">Saved locally in your browser so you can track what you sent.</p>
+  <div id="list"><small>No reports yet.</small></div>
+</section>
+</main>
+<footer>🇬🇭 Made for Ghana · If anyone is in immediate danger, call 112.</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const TO="report@yourdomain.com"; // <-- replace with your real Gmail/inbox
+const $=id=>document.getElementById(id);
+let photo=null, geo=null, type=null, stream=null;
+const toast=m=>{const t=$("toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),3200)};
+const step=n=>["s1","s2","s3"].forEach((s,i)=>$(s).classList.toggle("on",i<n));
+document.querySelectorAll(".chip").forEach(c=>c.onclick=()=>{
+  document.querySelectorAll(".chip").forEach(x=>x.classList.remove("sel"));c.classList.add("sel");type=c.textContent;step(Math.max(1,photo?2:1))});
+$("desc").oninput=e=>{$("cnt").textContent=e.target.value.length;if(e.target.value.length>10&&photo)step(3)};
+
+function getGeo(){return new Promise((res,rej)=>{
+  if(!navigator.geolocation)return rej(new Error("Geolocation not supported on this device."));
+  navigator.geolocation.getCurrentPosition(p=>res(p),e=>rej(new Error(e.code===1?"Location permission denied. Allow location access and retake the photo.":"Couldn’t get your location. Move to open sky and try again.")),{enableHighAccuracy:true,timeout:15000,maximumAge:0})})}
+
+async function stampImage(src){
+  $("gerr").textContent="";
+  const st=$("stamp");st.className="stamp ok";st.innerHTML='<span class="pulse"></span>Getting GPS location…';
+  const when=new Date();
+  try{const p=await getGeo();geo={lat:p.coords.latitude,lng:p.coords.longitude,acc:Math.round(p.coords.accuracy)}}
+  catch(e){geo=null;$("gerr").textContent=e.message}
+  const cv=$("cv"),ctx=cv.getContext("2d");
+  const w=src.videoWidth||src.naturalWidth,h=src.videoHeight||src.naturalHeight,s=Math.min(1,1280/w);
+  cv.width=w*s;cv.height=h*s;ctx.drawImage(src,0,0,cv.width,cv.height);
+  const ts=when.toLocaleString(),loc=geo?`${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)} (±${geo.acc}m)`:"Location unavailable";
+  const fs=Math.max(14,cv.width/38);ctx.font=`600 ${fs}px monospace`;
+  ctx.fillStyle="#000a";ctx.fillRect(0,cv.height-fs*3.2,cv.width,fs*3.2);
+  ctx.fillStyle="#fff";ctx.fillText("📍 "+loc,fs*.6,cv.height-fs*1.8);ctx.fillText("🕒 "+ts,fs*.6,cv.height-fs*.6);
+  photo={data:cv.toDataURL("image/jpeg",.8),when:ts};
+  $("outBox").style.display="block";$("outBox").classList.remove("flash");void $("outBox").offsetWidth;$("outBox").classList.add("flash");
+  st.innerHTML=`<b>Timestamp:</b> ${ts}<br><b>Coordinates:</b> ${loc}`+(geo?`<br><a href="https://www.openstreetmap.org/?mlat=${geo.lat}&mlon=${geo.lng}#map=17/${geo.lat}/${geo.lng}" target="_blank" rel="noopener" style="color:var(--acc)">View on map ↗</a>`:"");
+  step(2);toast(geo?"Photo stamped with location ✔":"Photo saved, but location is missing");
+}
+function stopCam(){if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("camBox").style.display="none";$("snapRow").style.display="none"}
+$("openCam").onclick=async()=>{
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+    $("vid").srcObject=stream;await $("vid").play();$("camBox").style.display="block";$("snapRow").style.display="flex";
+    getGeo().catch(()=>{}); // warm up GPS / trigger permission prompt
+  }catch(e){toast("Camera blocked here – use the phone camera / file option");$("file").click()}
+};
+$("snap").onclick=async()=>{await stampImage($("vid"));stopCam()};
+$("stop").onclick=stopCam;
+$("pick").onclick=()=>$("file").click();
+$("file").onchange=e=>{const f=e.target.files[0];if(!f)return;const img=new Image();img.onload=()=>{stampImage(img);URL.revokeObjectURL(img.src)};img.src=URL.createObjectURL(f)};
+
+function load(){try{return JSON.parse(localStorage.getItem("mw_reports")||"[]")}catch(e){return[]}}
+function save(a){try{localStorage.setItem("mw_reports",JSON.stringify(a))}catch(e){}}
+function render(){const a=load(),l=$("list");if(window.drawMap&&window.POLY)drawMap();if(!a.length){l.innerHTML="<small>No reports yet.</small>";return}
+  l.innerHTML="";a.forEach(r=>{const d=document.createElement("div");d.className="rep";
+    const i=document.createElement("img");if(r.thumb)i.src=r.thumb;
+    const t=document.createElement("div");t.innerHTML="<b></b><br><small></small>";
+    t.querySelector("b").textContent=r.type;t.querySelector("small").textContent=`${r.when} · ${r.loc}`;
+    d.append(i,t);l.append(d)})}
+function thumb(){const c=document.createElement("canvas");c.width=96;c.height=96;const x=c.getContext("2d");x.drawImage($("cv"),0,0,96,96*($("cv").height/$("cv").width));return c.toDataURL("image/jpeg",.5)}
+
+function mail(subject,body,gm){
+  const u=gm?`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(TO)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+            :`mailto:${TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(u,"_blank")||(location.href=u)}
+
+$("submit").onclick=()=>{
+  if(!type)return toast("Please choose what you saw");
+  if(!photo)return toast("Please take a photo first");
+  if($("desc").value.trim().length<10)return toast("Add a short description");
+  const loc=geo?`${geo.lat.toFixed(5)}, ${geo.lng.toFixed(5)}`:"No GPS";
+  const a=load();a.unshift({type,when:photo.when,loc,thumb:thumb(),lat:geo?geo.lat:null,lng:geo?geo.lng:null,w:$("sev").value.startsWith("High")?1:$("sev").value.startsWith("Med")?.65:.35});save(a.slice(0,15));render();pushShared(a[0]);
+  const body=`Type: ${type}\nUrgency: ${$("sev").value}\nTime: ${photo.when}\nCoordinates: ${loc}\n`+(geo?`Map: https://www.google.com/maps?q=${geo.lat},${geo.lng}\n`:"")+`\nDescription:\n${$("desc").value}\n\n(Attach the stamped photo saved from this page.)`;
+  // let the user keep the stamped photo to attach
+  const dl=document.createElement("a");dl.href=photo.data;dl.download="mining-report.jpg";document.body.append(dl);dl.click();dl.remove();
+  mail("Illegal mining report – "+type,body,true);
+  toast("Report saved. Attach the photo in the email and send ✔");confetti();$("cntr").textContent="📄 "+load().length+" reports sent";
+  step(3);
+};
+$("gmail").onclick=()=>{if(!$("cm").value.trim())return toast("Write a message first");mail("Message from "+($("cn").value||"a visitor"),$("cm").value,true)};
+$("mailto").onclick=()=>{if(!$("cm").value.trim())return toast("Write a message first");mail("Message from "+($("cn").value||"a visitor"),$("cm").value,false)};
+render();
+/* ---- interactive extras ---- */
+$("cntr").textContent="📄 "+load().length+" reports sent";
+setInterval(()=>{$("clk").textContent="🕒 "+new Date().toLocaleTimeString()},1000);
+try{navigator.geolocation.getCurrentPosition(p=>{$("gps").textContent="📍 "+p.coords.latitude.toFixed(4)+", "+p.coords.longitude.toFixed(4)},()=>{$("gps").textContent="📍 Location off"},{timeout:8000})}catch(e){$("gps").textContent="📍 Unavailable"}
+// reveal on scroll
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target)}}),{threshold:.1});
+document.querySelectorAll(".card").forEach(c=>{c.classList.add("rv");io.observe(c)});
+// ripple
+document.addEventListener("click",e=>{const t=e.target.closest(".btn,.chip");if(!t)return;const r=t.getBoundingClientRect(),s=document.createElement("span");s.className="rip";s.style.left=(e.clientX-r.left)+"px";s.style.top=(e.clientY-r.top)+"px";t.append(s);setTimeout(()=>s.remove(),600)});
+// hero particle network that reacts to pointer
+(function(){const h=document.querySelector(".hero"),c=document.createElement("canvas");c.id="fx";h.prepend(c);const x=c.getContext("2d");let W,H,m={x:-999,y:-999},P=[];
+ function rs(){W=c.width=h.clientWidth;H=c.height=h.clientHeight;P=Array.from({length:Math.min(70,W/12|0)},()=>({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.6,vy:(Math.random()-.5)*.6}))}
+ rs();addEventListener("resize",rs);
+ h.addEventListener("pointermove",e=>{const r=h.getBoundingClientRect();m.x=e.clientX-r.left;m.y=e.clientY-r.top});h.addEventListener("pointerleave",()=>m.x=-999);
+ (function f(){x.clearRect(0,0,W,H);P.forEach((p,i)=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+  const dx=p.x-m.x,dy=p.y-m.y,d=Math.hypot(dx,dy);if(d<110){p.x+=dx/d*2;p.y+=dy/d*2}
+  x.fillStyle="#ffd9a8aa";x.beginPath();x.arc(p.x,p.y,2,0,7);x.fill();
+  for(let j=i+1;j<P.length;j++){const q=P[j],l=Math.hypot(p.x-q.x,p.y-q.y);if(l<100){x.strokeStyle="rgba(255,255,255,"+(1-l/100)*.35+")";x.beginPath();x.moveTo(p.x,p.y);x.lineTo(q.x,q.y);x.stroke()}}
+  if(d<150){x.strokeStyle="rgba(255,217,168,"+(1-d/150)*.6+")";x.beginPath();x.moveTo(p.x,p.y);x.lineTo(m.x,m.y);x.stroke()}});requestAnimationFrame(f)})()})();
+// heat map (offline, drawn on canvas)
+var MG=null,useSample=false,SP=null,SHAREDMODE="demo";
+var DEMO=[{lat:5.30,lng:-1.99,w:1,demo:true},{lat:6.20,lng:-1.67,w:.9,demo:true},{lat:6.10,lng:-0.95,w:.7,demo:true},{lat:5.43,lng:-2.14,w:.8,demo:true},{lat:6.46,lng:-2.33,w:.55,demo:true}];
+var SHARED=DEMO.slice();
+var POLY=[[-3.11,5.09],[-2.0,4.75],[-1.0,5.0],[0.0,5.6],[0.6,5.8],[1.2,6.1],[0.65,6.9],[0.5,7.4],[0.6,8.3],[0.4,9.5],[0.0,10.7],[0.0,11.1],[-0.7,11.1],[-2.9,11.0],[-2.8,9.9],[-2.5,8.2],[-2.7,7.4],[-3.2,6.5],[-2.8,5.5]];
+function samplePts(){if(SP)return SP;var C=[[5.30,-1.99,1],[5.43,-2.14,.9],[6.2,-1.67,1],[6.1,-0.95,.8],[6.04,-0.8,.7],[7.0,-1.6,.6],[6.46,-2.33,.8],[5.6,-2.0,.7],[5.6,-1.5,.6],[5.2,-2.2,.7],[6.8,-1.3,.5],[6.6,-1.0,.4]];SP=[];C.forEach(function(c){for(var i=0;i<14;i++)SP.push({lat:c[0]+(Math.random()-.5)*.35,lng:c[1]+(Math.random()-.5)*.35,w:c[2]*(.5+Math.random()*.5)})});return SP}
+function drawMap(){var c=$("hm");if(!c)return;var cs=getComputedStyle(document.documentElement),dpr=window.devicePixelRatio||1,v=function(n){return cs.getPropertyValue(n)};
+ var real=load().filter(function(r){return r.lat!=null}).map(function(r){return{lat:r.lat,lng:r.lng,w:r.w||.6}});
+ var pts=load().filter(function(r){return r.lat!=null&&!r.synced}).map(function(r){return{lat:r.lat,lng:r.lng,w:r.w||.6}}).concat(SHARED);
+ var b={w:-3.4,e:1.4,s:4.6,n:11.3},ghana=!pts.some(function(p){return p.lat<b.s||p.lat>b.n||p.lng<b.w||p.lng>b.e});
+ if(!ghana){var la=pts.map(function(p){return p.lat}),ln=pts.map(function(p){return p.lng});b={w:Math.min.apply(0,ln)-.3,e:Math.max.apply(0,ln)+.3,s:Math.min.apply(0,la)-.3,n:Math.max.apply(0,la)+.3}}
+ var cw=Math.min(c.parentNode.clientWidth||320,420),k=Math.cos((b.n+b.s)/2*Math.PI/180),H=Math.min(cw*1.5,cw*(b.n-b.s)/((b.e-b.w)*k));
+ c.style.width=cw+"px";c.style.height=H+"px";c.width=cw*dpr;c.height=H*dpr;var W=c.width,Hh=c.height;MG={b:b,W:W,H:Hh,pts:pts,dpr:dpr};
+ var P=function(la,ln){return[(ln-b.w)/(b.e-b.w)*W,(b.n-la)/(b.n-b.s)*Hh]};
+ var x=c.getContext("2d");x.fillStyle=v("--bg");x.fillRect(0,0,W,Hh);x.strokeStyle=v("--line");x.lineWidth=1;
+ for(var i=1;i<8;i++){x.beginPath();x.moveTo(W*i/8,0);x.lineTo(W*i/8,Hh);x.moveTo(0,Hh*i/8);x.lineTo(W,Hh*i/8);x.stroke()}
+ if(ghana){x.beginPath();POLY.forEach(function(p,i){var q=P(p[1],p[0]);i?x.lineTo(q[0],q[1]):x.moveTo(q[0],q[1])});x.closePath();x.fillStyle=v("--card");x.fill();x.strokeStyle=v("--acc");x.lineWidth=2*dpr;x.stroke();x.fillStyle=v("--mut");x.font=(11*dpr)+"px sans-serif";x.fillText("GHANA",W*.42,Hh*.5)}
+ var o=document.createElement("canvas");o.width=W;o.height=Hh;var ox=o.getContext("2d"),R=Math.max(W,Hh)*.06;
+ pts.forEach(function(p){var q=P(p.lat,p.lng),g=ox.createRadialGradient(q[0],q[1],0,q[0],q[1],R);g.addColorStop(0,"rgba(0,0,0,"+(.28*p.w+.08)+")");g.addColorStop(1,"rgba(0,0,0,0)");ox.fillStyle=g;ox.fillRect(q[0]-R,q[1]-R,2*R,2*R)});
+ var pc=document.createElement("canvas");pc.width=256;pc.height=1;var pg=pc.getContext("2d"),gr=pg.createLinearGradient(0,0,256,0);
+ [[0,"#2c7bb6"],[.3,"#00cc88"],[.5,"#ffff00"],[.75,"#ff8c00"],[1,"#d7191c"]].forEach(function(s){gr.addColorStop(s[0],s[1])});pg.fillStyle=gr;pg.fillRect(0,0,256,1);
+ var pd=pg.getImageData(0,0,256,1).data,im=ox.getImageData(0,0,W,Hh),d=im.data;
+ for(var j=0;j<d.length;j+=4){var a=d[j+3];if(a){d[j]=pd[a*4];d[j+1]=pd[a*4+1];d[j+2]=pd[a*4+2];d[j+3]=Math.min(255,a*1.7)}}
+ ox.putImageData(im,0,0);x.drawImage(o,0,0);
+ real.forEach(function(p){var q=P(p.lat,p.lng);x.beginPath();x.arc(q[0],q[1],4*dpr,0,7);x.fillStyle="#fff";x.fill();x.lineWidth=2*dpr;x.strokeStyle="#000";x.stroke()});
+ $("mapinfo").textContent=pts.length+" report"+(pts.length==1?"":"s")+" on the map"+(real.length?" · your reports are the white dots":"")+(SHARED.some(function(p){return p.demo})?" · includes demo reports":"")+"."}
+$("hm").onclick=function(e){if(!MG)return;var r=this.getBoundingClientRect(),fx=(e.clientX-r.left)/r.width,fy=(e.clientY-r.top)/r.height,b=MG.b,lat=b.n-fy*(b.n-b.s),lng=b.w+fx*(b.e-b.w),n=0;
+ MG.pts.forEach(function(p){if(Math.hypot(p.lat-lat,p.lng-lng)<.25)n++});$("mapinfo").textContent="📍 "+lat.toFixed(4)+", "+lng.toFixed(4)+" · "+n+" report"+(n==1?"":"s")+" within ~25 km"};
+$("smp").style.cursor="default";$("smp").textContent="Demo data";
+addEventListener("resize",drawMap);try{matchMedia("(prefers-color-scheme:dark)").addEventListener("change",drawMap)}catch(e){}
+drawMap();
+// shared database: every report ever made, from everyone
+var DBREF=null,DBW=false;
+function pushShared(r){if(!DBREF||!DBW||!r||r.lat==null)return;DBREF.add({lat:r.lat,lng:r.lng,w:r.w,type:r.type,ts:Date.now()}).then(function(){var a=load(),i=a.findIndex(function(x){return x.when===r.when&&x.loc===r.loc});if(i>=0){a[i].synced=true;save(a)}drawMap()}).catch(function(){})}
+(async function(){try{var cl=window.claude;if(!cl)return;var db=await cl.use("db");if(!db)return;DBREF=db.collection("reports");
+ var u=await cl.use("user");try{DBW=u?(await u.can("data.write"))!==false:true}catch(e){DBW=true}
+ DBREF.onSnapshot(function(s){var a=s.docs.map(function(d){return d.data()}).filter(function(v){return v&&v.lat!=null}).map(function(v){return{lat:v.lat,lng:v.lng,w:v.w||.5,demo:!!v.demo}});
+  if(a.length){SHARED=a;SHAREDMODE="live";$("smp").textContent="● Live: "+a.length+" reports";drawMap()}},function(){})}catch(e){}})();
+// confetti on successful submit
+function confetti(){const c=document.createElement("canvas");c.id="cf";document.body.append(c);c.width=innerWidth;c.height=innerHeight;const x=c.getContext("2d"),cols=["#1f7a4d","#c8641b","#ffd9a8","#4cc58a","#fff"];
+ const A=Array.from({length:120},()=>({x:innerWidth/2,y:innerHeight*.7,vx:(Math.random()-.5)*14,vy:-Math.random()*16-4,s:4+Math.random()*6,c:cols[Math.random()*5|0],r:Math.random()*6}));let n=0;
+ (function f(){x.clearRect(0,0,c.width,c.height);A.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.4;p.r+=.2;x.save();x.translate(p.x,p.y);x.rotate(p.r);x.fillStyle=p.c;x.fillRect(-p.s/2,-p.s/2,p.s,p.s*.6);x.restore()});if(++n<110)requestAnimationFrame(f);else c.remove()})()}
+</script>
+</body>
+</html>
