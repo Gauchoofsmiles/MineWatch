@@ -1,3 +1,4 @@
+
 import sqlite3
 from datetime import datetime
 from collections import Counter
@@ -81,4 +82,4 @@ if __name__ == '__main__':
         print(row)
     print("\nRisk distribution:")
     for key, count in get_risk_distribution().items():
-        print(f"{key}: {count}") 
+        print(f"{key}: {count}")
